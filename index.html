@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communication Failure Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.5s ease;
+            background-color: #e8e8e8;
+        }
+
+        body.green-bg {
+            background-color: #a8d5a8;
+        }
+
+        body.yellow-bg {
+            background-color: #f5d76e;
+        }
+
+        body.red-bg {
+            background-color: #f59090;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 90%;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .dialogue {
+            background: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #666;
+        }
+
+        .dialogue p {
+            color: #333;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: linear-gradient(135deg, #666 0%, #888 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-align: left;
+        }
+
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #555 0%, #777 100%);
+        }
+
+        .option-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Emoji Face Styles */
+        .face-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .face {
+            width: 120px;
+            height: 120px;
+            background: #d0d0d0;
+            border-radius: 50%;
+            position: relative;
+            border: 4px solid #888;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Eyes */
+        .face .eyes {
+            display: flex;
+            justify-content: space-around;
+            padding: 30px 25px 0;
+        }
+
+        .face .eye {
+            width: 12px;
+            height: 12px;
+            background: #333;
+            border-radius: 50%;
+        }
+
+        /* Mouth variations */
+        .face .mouth {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 30px;
+        }
+
+        /* Happy mouth */
+        .face.happy .mouth {
+            width: 40px;
+            height: 20px;
+            border: 3px solid #333;
+            border-top: none;
+            border-radius: 0 0 40px 40px;
+        }
+
+        /* Neutral mouth */
+        .face.neutral .mouth {
+            width: 30px;
+            height: 3px;
+            background: #333;
+        }
+
+        /* Sad mouth */
+        .face.sad .mouth {
+            width: 40px;
+            height: 20px;
+            border: 3px solid #333;
+            border-bottom: none;
+            border-radius: 40px 40px 0 0;
+        }
+
+        /* Worried mouth */
+        .face.worried .mouth {
+            width: 30px;
+            height: 15px;
+            border: 3px solid #333;
+            border-bottom: none;
+            border-radius: 30px 30px 0 0;
+            transform: translateX(-50%) rotate(-10deg);
+        }
+
+        /* Confused eyes */
+        .face.confused .eyes {
+            position: relative;
+        }
+
+        .face.confused .eye:first-child {
+            transform: translateY(-3px);
+        }
+
+        .face.confused .eye:last-child {
+            transform: translateY(3px);
+        }
+
+        /* Angry eyebrows */
+        .face.angry::before,
+        .face.angry::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 3px;
+            background: #333;
+            top: 25px;
+        }
+
+        .face.angry::before {
+            left: 20px;
+            transform: rotate(-20deg);
+        }
+
+        .face.angry::after {
+            right: 20px;
+            transform: rotate(20deg);
+        }
+
+        /* Meter */
+        .meter-container {
+            margin: 30px 0;
+        }
+
+        .meter-label {
+            text-align: center;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #888;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .meter-fill {
+            height: 100%;
+            transition: width 0.5s ease, background-color 0.5s ease;
+            background: linear-gradient(90deg, #666 0%, #888 100%);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .meter-fill.low {
+            background: linear-gradient(90deg, #6b9b6b 0%, #88b888 100%);
+        }
+
+        .meter-fill.medium {
+            background: linear-gradient(90deg, #c9a84e 0%, #d4b75e 100%);
+        }
+
+        .meter-fill.high {
+            background: linear-gradient(90deg, #b85555 0%, #c97070 100%);
+        }
+
+        /* Interaction counter */
+        .interaction-counter {
+            text-align: center;
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        /* Conclusion page */
+        .conclusion {
+            text-align: center;
+        }
+
+        .conclusion-emoji {
+            font-size: 80px;
+            margin: 20px 0;
+        }
+
+        .conclusion-text {
+            font-size: 20px;
+            color: #333;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #333 0%, #555 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #222 0%, #444 100%);
+        }
+
+        /* Emotion label */
+        .emotion-label {
+            text-align: center;
+            color: #444;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page 01: Opening Scene -->
+        <div id="page1" class="page active">
+            <h1>Communication Failure Simulator</h1>
+            <div class="dialogue">
+                <p>Your friend sends a message:<br><br><strong>"How have you been recently?"</strong></p>
+            </div>
+            <div class="options">
+                <button class="option-btn" onclick="selectOption('A')">
+                    A: "It's okay, a bit tired."
+                </button>
+                <button class="option-btn" onclick="selectOption('B')">
+                    B: "Why did you suddenly ask this?"
+                </button>
+                <button class="option-btn" onclick="selectOption('C')">
+                    C: "Haha, I'm fine! How about you?"
+                </button>
+            </div>
+        </div>
+
+        <!-- Page 02: Reaction Emotions -->
+        <div id="page2" class="page">
+            <h1>Conversation in Progress</h1>
+
+            <div class="interaction-counter">
+                Interaction <span id="interactionCount">1</span> of 5
+            </div>
+
+            <div class="face-container">
+                <div id="emotionFace" class="face neutral">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
+
+            <div class="emotion-label" id="emotionLabel">Neutral</div>
+
+            <div class="meter-container">
+                <div class="meter-label">Communication Breakdown Meter</div>
+                <div class="meter-bar">
+                    <div id="meterFill" class="meter-fill low" style="width: 0%">
+                        <span id="meterValue">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dialogue" id="friendResponse">
+                <p>Your friend responds...</p>
+            </div>
+
+            <div class="options" id="responseOptions">
+                <!-- Dynamic options will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Page 03: Conclusion -->
+        <div id="page3" class="page">
+            <h1>Conversation Ended</h1>
+            <div class="conclusion">
+                <div class="face-container">
+                    <div id="conclusionFace" class="face neutral">
+                        <div class="eyes">
+                            <div class="eye"></div>
+                            <div class="eye"></div>
+                        </div>
+                        <div class="mouth"></div>
+                    </div>
+                </div>
+                <p class="conclusion-text" id="conclusionText"></p>
+                <button class="restart-btn" onclick="restartSimulator()">Restart Simulator</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let breakdownMeter = 0;
+        let interactionCount = 0;
+        const maxInteractions = 5;
+        let conversationPath = [];
+
+        // Dialogue trees for different paths
+        const dialogueTree = {
+            A: {
+                friendResponse: "Oh, what happened? Are you okay?",
+                emotion: "neutral",
+                options: [
+                    { text: "Just work stuff, nothing serious.", effect: 5, emotion: "neutral" },
+                    { text: "I don't really want to talk about it.", effect: 15, emotion: "worried" },
+                    { text: "It's fine, really! Don't worry about me.", effect: 3, emotion: "happy" }
+                ]
+            },
+            B: {
+                friendResponse: "Um... I was just concerned about you...",
+                emotion: "worried",
+                options: [
+                    { text: "Sorry, I'm just stressed. Thanks for asking.", effect: 5, emotion: "neutral" },
+                    { text: "I'm fine. Why wouldn't I be?", effect: 18, emotion: "confused" },
+                    { text: "I appreciate you checking in on me.", effect: -5, emotion: "happy" }
+                ]
+            },
+            C: {
+                friendResponse: "That's great! I'm doing well too. Glad to hear from you!",
+                emotion: "happy",
+                options: [
+                    { text: "Yeah, we should catch up more often!", effect: -3, emotion: "happy" },
+                    { text: "Cool.", effect: 12, emotion: "neutral" },
+                    { text: "Anyway, I have to go now.", effect: 15, emotion: "sad" }
+                ]
+            }
+        };
+
+        // Follow-up dialogue based on meter levels
+        const followUpDialogues = [
+            {
+                low: {
+                    friendResponse: "I'm glad we're talking. Want to grab coffee sometime?",
+                    options: [
+                        { text: "Sure! I'd love that.", effect: -5, emotion: "happy" },
+                        { text: "Maybe, I'll let you know.", effect: 8, emotion: "neutral" },
+                        { text: "I'm pretty busy these days.", effect: 15, emotion: "worried" }
+                    ]
+                },
+                medium: {
+                    friendResponse: "Okay... well, just wanted to check in.",
+                    options: [
+                        { text: "Thanks, I appreciate it.", effect: -3, emotion: "neutral" },
+                        { text: "Sure, thanks.", effect: 10, emotion: "neutral" },
+                        { text: "Alright.", effect: 12, emotion: "sad" }
+                    ]
+                },
+                high: {
+                    friendResponse: "I feel like there's some tension here...",
+                    options: [
+                        { text: "No, everything's fine.", effect: 10, emotion: "worried" },
+                        { text: "Maybe we're both just tired.", effect: 5, emotion: "neutral" },
+                        { text: "I don't know what you mean.", effect: 15, emotion: "confused" }
+                    ]
+                }
+            },
+            {
+                low: {
+                    friendResponse: "This has been really nice. I've missed our chats!",
+                    options: [
+                        { text: "Me too! We should do this more.", effect: -5, emotion: "happy" },
+                        { text: "Yeah, it's been good.", effect: 3, emotion: "neutral" }
+                    ]
+                },
+                medium: {
+                    friendResponse: "Well, I should probably get going...",
+                    options: [
+                        { text: "Okay, talk soon!", effect: 5, emotion: "neutral" },
+                        { text: "Yeah, bye.", effect: 12, emotion: "sad" }
+                    ]
+                },
+                high: {
+                    friendResponse: "I'm not sure what I said wrong...",
+                    options: [
+                        { text: "You didn't. I'm just having a bad day.", effect: -5, emotion: "neutral" },
+                        { text: "Nothing's wrong.", effect: 15, emotion: "angry" }
+                    ]
+                }
+            },
+            {
+                low: {
+                    friendResponse: "You always know how to brighten my day!",
+                    options: [
+                        { text: "Aww, you too! 😊", effect: -5, emotion: "happy" }
+                    ]
+                },
+                medium: {
+                    friendResponse: "Okay, I'll talk to you later then.",
+                    options: [
+                        { text: "Sounds good.", effect: 8, emotion: "neutral" }
+                    ]
+                },
+                high: {
+                    friendResponse: "I think we're not on the same page here...",
+                    options: [
+                        { text: "Whatever you say.", effect: 18, emotion: "angry" }
+                    ]
+                }
+            }
+        ];
+
+        function selectOption(choice) {
+            conversationPath.push(choice);
+            interactionCount = 1;
+
+            const dialogue = dialogueTree[choice];
+
+            // Update meter based on initial choice
+            if (choice === 'A') {
+                breakdownMeter += 3;
+            } else if (choice === 'B') {
+                breakdownMeter += 20;
+            } else if (choice === 'C') {
+                breakdownMeter -= 5;
+            }
+
+            breakdownMeter = Math.max(0, Math.min(100, breakdownMeter));
+
+            // Show page 2
+            showPage('page2');
+            updateMeter();
+            updateFace(dialogue.emotion);
+            updateEmotionLabel(dialogue.emotion);
+
+            // Display friend's response
+            document.getElementById('friendResponse').innerHTML = `<p>${dialogue.friendResponse}</p>`;
+
+            // Display options
+            displayOptions(dialogue.options);
+        }
+
+        function displayOptions(options) {
+            const container = document.getElementById('responseOptions');
+            container.innerHTML = '';
+
+            options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option.text;
+                button.onclick = () => selectResponse(option);
+                container.appendChild(button);
+            });
+        }
+
+        function selectResponse(option) {
+            interactionCount++;
+            breakdownMeter += option.effect;
+            breakdownMeter = Math.max(0, Math.min(100, breakdownMeter));
+
+            updateMeter();
+            updateFace(option.emotion);
+            updateEmotionLabel(option.emotion);
+
+            if (interactionCount >= maxInteractions) {
+                showConclusion();
+                return;
+            }
+
+            document.getElementById('interactionCount').textContent = interactionCount;
+
+            // Get next dialogue based on current meter level
+            const level = getMeterLevel();
+            const dialogueIndex = Math.min(interactionCount - 2, followUpDialogues.length - 1);
+            const nextDialogue = followUpDialogues[dialogueIndex][level];
+
+            setTimeout(() => {
+                document.getElementById('friendResponse').innerHTML = `<p>${nextDialogue.friendResponse}</p>`;
+                displayOptions(nextDialogue.options);
+            }, 300);
+        }
+
+        function getMeterLevel() {
+            if (breakdownMeter < 30) return 'low';
+            if (breakdownMeter < 60) return 'medium';
+            return 'high';
+        }
+
+        function updateMeter() {
+            const meterFill = document.getElementById('meterFill');
+            const meterValue = document.getElementById('meterValue');
+
+            meterFill.style.width = breakdownMeter + '%';
+            meterValue.textContent = Math.round(breakdownMeter);
+
+            // Update meter color
+            meterFill.classList.remove('low', 'medium', 'high');
+            if (breakdownMeter < 30) {
+                meterFill.classList.add('low');
+                document.body.className = 'green-bg';
+            } else if (breakdownMeter < 60) {
+                meterFill.classList.add('medium');
+                document.body.className = 'yellow-bg';
+            } else {
+                meterFill.classList.add('high');
+                document.body.className = 'red-bg';
+            }
+        }
+
+        function updateFace(emotion) {
+            const face = document.getElementById('emotionFace');
+            face.className = 'face ' + emotion;
+        }
+
+        function updateEmotionLabel(emotion) {
+            const labels = {
+                happy: 'Warm & Positive',
+                neutral: 'Neutral',
+                sad: 'Disappointed',
+                worried: 'Concerned',
+                confused: 'Confused',
+                angry: 'Frustrated'
+            };
+            document.getElementById('emotionLabel').textContent = labels[emotion] || 'Neutral';
+        }
+
+        function showConclusion() {
+            showPage('page3');
+
+            const conclusionFace = document.getElementById('conclusionFace');
+            const conclusionText = document.getElementById('conclusionText');
+
+            if (breakdownMeter < 30) {
+                conclusionFace.className = 'face happy';
+                conclusionText.innerHTML = '<strong style="color: #4a8f4a;">The relationship has gotten a little closer :)</strong><br><br>Your thoughtful communication helped maintain harmony and understanding.';
+            } else if (breakdownMeter < 60) {
+                conclusionFace.className = 'face worried';
+                conclusionText.innerHTML = '<strong style="color: #b8942d;">Neither of you truly understood each other\'s meaning.</strong><br><br>There were some miscommunications, but the relationship remains intact.';
+            } else {
+                conclusionFace.className = 'face sad';
+                conclusionText.innerHTML = '<strong style="color: #a84444;">The conversation has ended. You both misunderstood each other.</strong><br><br>Communication breakdown occurred. Consider how tone affects relationships.';
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function restartSimulator() {
+            breakdownMeter = 0;
+            interactionCount = 0;
+            conversationPath = [];
+            document.body.className = '';
+            showPage('page1');
+        }
+    </script>
+</body>
+</html>
